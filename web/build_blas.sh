@@ -1,33 +1,36 @@
 #!/bin/bash
 
-# Download and extract blas source
-curl -LO https://www.netlib.org/blas/blas-3.12.0.tgz
-tar zxf blas-3.12.0.tgz
+# Download and extract lapack source, which includes blas source
+curl -LO https://github.com/Reference-LAPACK/lapack/archive/refs/tags/v${BLAS_VERSION}.tar.gz
+tar zxf v${BLAS_VERSION}.tar.gz
 
-# Configure and build blas
-cd BLAS-3.12.0
+# Configure and build lapack
+cd lapack-${BLAS_VERSION}
 cat <<EOF > make.inc
 ####################################################################
-#  BLAS make include file.                                         #
-#  March 2007                                                      #
+#  LAPACK make include file.                                       #
 ####################################################################
-#
+
 SHELL = /bin/sh
+
+#  CC is the C compiler, normally invoked with options CFLAGS.
 #
-#  The machine (platform) identifier to append to the library names
+CC = gcc
+CFLAGS = -O3
+
+#  Modify the FC and FFLAGS definitions to the desired compiler
+#  and desired compiler options for your machine.  NOOPT refers to
+#  the compiler options desired when NO OPTIMIZATION is selected.
 #
-PLAT = _LINUX
+#  Note: During a regular execution, LAPACK might create NaN and Inf
+#  and handle these quantities appropriately. As a consequence, one
+#  should not compile LAPACK with flags such as -ffpe-trap=overflow.
 #
-#  Modify the FORTRAN and OPTS definitions to refer to the
-#  compiler and desired compiler options for your machine.  NOOPT
-#  refers to the compiler options desired when NO OPTIMIZATION is
-#  selected.  Define LOADER and LOADOPTS to refer to the loader and
-#  desired load options for your machine.
-#
-FC  = /opt/flang/host/bin/flang
+FC = /opt/flang/host/bin/flang
 FFLAGS = -O2
 FFLAGS_DRV = \$(FFLAGS)
 FFLAGS_NOOPT = -O0
+
 #  Define LDFLAGS to the desired linker options for your machine.
 #
 LDFLAGS =
@@ -38,13 +41,61 @@ LDFLAGS =
 AR = /opt/emsdk/upstream/emscripten/emar
 ARFLAGS = cr
 RANLIB = /opt/emsdk/upstream/emscripten/emranlib
+
+#  Timer for the SECOND and DSECND routines
 #
-#  The location and name of the Reference BLAS library.
+#  Default:  SECOND and DSECND will use a call to the
+#  EXTERNAL FUNCTION ETIME
+#TIMER = EXT_ETIME
+#  For RS6K:  SECOND and DSECND will use a call to the
+#  EXTERNAL FUNCTION ETIME_
+#TIMER = EXT_ETIME_
+#  For gfortran compiler:  SECOND and DSECND will use a call to the
+#  INTERNAL FUNCTION ETIME
+#TIMER = INT_ETIME
+#  If your Fortran compiler does not provide etime (like Nag Fortran
+#  Compiler, etc...) SECOND and DSECND will use a call to the
+#  INTERNAL FUNCTION CPU_TIME
+TIMER = INT_CPU_TIME
+#  If none of these work, you can use the NONE value.
+#  In that case, SECOND and DSECND will always return 0.
+#TIMER = NONE
+
+#  Uncomment the following line to include deprecated routines in
+#  the LAPACK library.
 #
-BLASLIB      = blas\$(PLAT).a
+#BUILD_DEPRECATED = Yes
+
+#  LAPACKE has the interface to some routines from tmglib.
+#  If LAPACKE_WITH_TMG is defined, add those routines to LAPACKE.
+#
+#LAPACKE_WITH_TMG = Yes
+
+#  Location of the extended-precision BLAS (XBLAS) Fortran library
+#  used for building and testing extended-precision routines.  The
+#  relevant routines will be compiled and XBLAS will be linked only
+#  if USEXBLAS is defined.
+#
+#USEXBLAS = Yes
+#XBLASLIB = -lxblas
+
+#  The location of the libraries to which you will link.  (The
+#  machine-specific, optimized BLAS library should be used whenever
+#  possible.)
+#
+BLASLIB      = \$(TOPSRCDIR)/libblas.a
+CBLASLIB     = \$(TOPSRCDIR)/libcblas.a
+LAPACKLIB    = \$(TOPSRCDIR)/liblapack.a
+TMGLIB       = \$(TOPSRCDIR)/libtmglib.a
+LAPACKELIB   = \$(TOPSRCDIR)/liblapacke.a
+
+#  DOCUMENTATION DIRECTORY
+# If you generate html pages (make html), documentation will be placed in \$(DOCSDIR)/explore-html
+# If you generate man pages (make man), documentation will be placed in \$(DOCSDIR)/man
+DOCSDIR       = \$(TOPSRCDIR)/DOCS
 EOF
-make -j$(nproc)
+make blaslib -j$(nproc)
 
 # Copy libblas.a
-cp blas_LINUX.a ${LIBDIR}/libblas.a
-echo "Successfully built libblas.a"
+cp libblas.a ${LIBDIR}/
+echo "Successfully built BLAS"

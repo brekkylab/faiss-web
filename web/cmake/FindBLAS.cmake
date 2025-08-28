@@ -1,5 +1,9 @@
+set(BLAS_FOUND TRUE)
+set(BLAS_VERSION "3.12.1")
+set(BLAS_LIBRARIES "blas")
+
 # Target: blas_lib
-set(BLAS_LIBRARY_PATH "${CMAKE_BINARY_DIR}/web/libblas.a")
+set(BLAS_LIBRARY_PATH "${CMAKE_CURRENT_LIST_DIR}/../lib/libblas.a")
 set(BLAS_BUILD_SCRIPT_PATH "${CMAKE_CURRENT_LIST_DIR}/../build_blas.sh")
 if(EXISTS ${BLAS_LIBRARY_PATH})
     message(STATUS "Found BLAS library at ${BLAS_LIBRARY_PATH}")
@@ -11,6 +15,7 @@ else()
             -v ${BLAS_BUILD_SCRIPT_PATH}:/build.sh
             -v ${CMAKE_CURRENT_LIST_DIR}/../lib:/workspace/lib
             -e LIBDIR=/workspace/lib
+            -e BLAS_VERSION=${BLAS_VERSION}
             ghcr.io/r-wasm/flang-wasm:v20.1.4
             /build.sh
         DEPENDS ${BLAS_BUILD_SCRIPT_PATH}
@@ -38,9 +43,6 @@ install(FILES ${BLAS_LIBRARY_PATH}
 )
 
 include(FindPackageHandleStandardArgs)
-set(BLAS_FOUND TRUE)
-set(BLAS_VERSION "3.12.0")
-set(BLAS_LIBRARIES "blas")
 find_package_handle_standard_args(BLAS
     REQUIRED_VARS BLAS_FOUND BLAS_LIBRARIES
     VERSION_VAR BLAS_VERSION

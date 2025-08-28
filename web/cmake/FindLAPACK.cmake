@@ -1,5 +1,9 @@
+set(LAPACK_FOUND TRUE)
+set(LAPACK_VERSION "3.12.1")
+set(LAPACK_LIBRARIES "lapack")
+
 # Target: lapack_lib
-set(LAPACK_LIBRARY_PATH "${CMAKE_BINARY_DIR}/web/liblapack.a")
+set(LAPACK_LIBRARY_PATH "${CMAKE_CURRENT_LIST_DIR}/../lib/liblapack.a")
 set(LAPACK_BUILD_SCRIPT_PATH "${CMAKE_CURRENT_LIST_DIR}/../build_lapack.sh")
 if(EXISTS ${LAPACK_LIBRARY_PATH})
     message(STATUS "Found LAPACK library at ${LAPACK_LIBRARY_PATH}")
@@ -11,6 +15,7 @@ else()
             -v ${LAPACK_BUILD_SCRIPT_PATH}:/build.sh
             -v ${CMAKE_CURRENT_LIST_DIR}/../lib:/workspace/lib
             -e LIBDIR=/workspace/lib
+            -e LAPACK_VERSION=${LAPACK_VERSION}
             ghcr.io/r-wasm/flang-wasm:v20.1.4
             /build.sh
         DEPENDS ${LAPACK_BUILD_SCRIPT_PATH}
@@ -38,9 +43,6 @@ install(FILES ${LAPACK_LIBRARY_PATH}
 )
 
 include(FindPackageHandleStandardArgs)
-set(LAPACK_FOUND TRUE)
-set(LAPACK_VERSION "3.12.0")
-set(LAPACK_LIBRARIES "lapack")
 find_package_handle_standard_args(LAPACK
     REQUIRED_VARS LAPACK_FOUND LAPACK_LIBRARIES
     VERSION_VAR LAPACK_VERSION

@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # Download and extract lapack source
-curl -LO https://github.com/Reference-LAPACK/lapack/archive/refs/tags/v3.12.0.tar.gz
-tar zxf v3.12.0.tar.gz
+curl -LO https://github.com/Reference-LAPACK/lapack/archive/refs/tags/v${LAPACK_VERSION}.tar.gz
+tar zxf v${LAPACK_VERSION}.tar.gz
 
 # Configure and build lapack
-cd lapack-3.12.0
+cd lapack-${LAPACK_VERSION}
 cat <<EOF > make.inc
 ####################################################################
 #  LAPACK make include file.                                       #
@@ -83,7 +83,7 @@ TIMER = INT_CPU_TIME
 #  machine-specific, optimized BLAS library should be used whenever
 #  possible.)
 #
-BLASLIB      = \$(TOPSRCDIR)/librefblas.a
+BLASLIB      = \$(TOPSRCDIR)/libblas.a
 CBLASLIB     = \$(TOPSRCDIR)/libcblas.a
 LAPACKLIB    = \$(TOPSRCDIR)/liblapack.a
 TMGLIB       = \$(TOPSRCDIR)/libtmglib.a
@@ -97,5 +97,5 @@ EOF
 make lapacklib -j$(nproc)
 
 # Copy liblapack.a
-cp liblapack.a ${LIBDIR}/liblapack.a
-echo "Successfully built liblapack.a"
+cp liblapack.a ${LIBDIR}/
+echo "Successfully built LAPACK"
